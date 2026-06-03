@@ -50,7 +50,7 @@ else:
         st.info("💡 왼쪽 메뉴를 클릭하여 상세 분석 내용을 확인하세요.")
 
     # --- [섹션 2: 연령별 사고율 분석] ---
-        elif menu == "연령별 사고율 분석":
+                elif menu == "연령별 사고율 분석":
             st.title("📈 연령대별 사고 위험도 분석")
             
             # 1) 데이터 정렬을 위한 순서 정의
@@ -58,10 +58,14 @@ else:
             
             # 1. 연령대별 사고율
             st.header("1) 연령대별 사고율 비교")
-            query1 = "..." # 기존 쿼리 그대로
+            query1 = """
+            SELECT a.age_group, (CAST(a.accident_count AS FLOAT) / b.license_count) * 100 as accident_rate
+            FROM 가해운전자 a
+            JOIN 면허소지자 b ON a.age_group = b.age_group
+            """
             df1 = run_query(query1)
             
-            # [수정] 순서 적용
+            # 순서 적용
             df1['age_group'] = pd.Categorical(df1['age_group'], categories=age_order, ordered=True)
             df1 = df1.sort_values('age_group')
             
@@ -69,38 +73,31 @@ else:
                 lambda x: '고령층(60세 이상)' if x in ['60-64세', '65세 이상'] else '기타 연령'
             )
             
-            fig1 = px.bar(df1, x='age_group', y='accident_rate', color='group', ...)
+            fig1 = px.bar(df1, x='age_group', y='accident_rate', color='group',
+                          color_discrete_map={'고령층(60세 이상)': 'crimson', '기타 연령': 'lightgray'})
             st.plotly_chart(fig1, use_container_width=True)
             
-            # [수정] Expander 없이 바로 출력 + 구분선
             st.divider() 
             st.subheader("🔍 SQL 및 인사이트")
             st.code(query1, language='sql')
             st.write("""
-            - **인사이트**: 19세 이하 운전자의 사고율이 가장 높게 나타났습니다...
+            - **인사이트**: 19세 이하 운전자의 사고율이 가장 높게 나타났습니다.
             - 본 연구의 정책 대상은 고령 운전자이므로, 60세 이상 구간을 주목해야 합니다.
             """)
 
+            # 2. 상대 위험도 (들여쓰기 주의!)
+            st.header("2) 고령 vs 비고령 상대 위험도")
+            query2 = """
+            SELECT 
+                CASE WHEN age_group IN ('60-64세', '65세 이상') THEN '고령운전자'
+                     ELSE '비고령운전자' END as group_type,
+                SUM(accident_count) as total_acc,
+                SUM(license_count) as total_lic
+            FROM 가해운전자 a JOIN 면허소지자 b ON a.age_group = b.age_group
+            GROUP BY group_type
+            """
+            # ... (이후 기존의 df2 계산 및 fig2 출력 로직 계속)
 
-
-        # 2. 상대 위험도
-        st.header("2) 고령 vs 비고령 상대 위험도")
-        query2 = """
-
-        SELECT 
-            CASE 
-                WHEN age_group = '65세 이상' THEN '고령운전자'
-                ELSE '비고령운전자' 
-            END as group_type,
-            SUM(accident_count) as total_acc,
-            SUM(license_count) as total_lic
-        FROM (
-            SELECT a.age_group, a.accident_count, b.license_count 
-            FROM 가해운전자 a 
-            JOIN 면허소지자 b ON a.age_group = b.age_group
-        )
-        GROUP BY group_type
-        """
         df2 = run_query(query2)
         df2['rate'] = (df2['total_acc'] / df2['total_lic']) * 100
 
