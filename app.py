@@ -8,7 +8,8 @@ import plotly.express as px
 st.set_page_config(page_title="고령 운전자 정책 분석 대시보드", layout="wide")
 
 # --- 2. DB 연결 및 에러 처리 ---
-DB_FILE = 'drive.db'
+# 파일명이 'elderly_right.db'라고 가정했습니다. 다르면 수정하세요.
+DB_FILE = 'elderly_right.db'
 
 def get_connection():
     if not os.path.exists(DB_FILE):
@@ -41,166 +42,87 @@ else:
         st.markdown("""
         최근 고령 운전자 사고가 연일 보도되면서 사회적 불안감이 커지고 있습니다. 
         하지만 **'단순히 나이가 많아서 위험한가?'** 혹은 **'면허 반납이 유일한 해결책인가?'** 에 대한 질문에는 데이터로 답해야 합니다.
-        
-        본 대시보드는 다음의 흐름을 따릅니다:
-        1. **위험 진단**: 연령대별 실제 사고율 비교
-        2. **정책 점검**: 지자체별 면허 반납 정책의 성과
-        3. **대안 모색**: 대중교통 인프라가 반납에 미치는 영향
         """)
         st.info("💡 왼쪽 메뉴를 클릭하여 상세 분석 내용을 확인하세요.")
 
     # --- [섹션 2: 연령별 사고율 분석] ---
-        elif menu == "연령별 사고율 분석":
-            st.title("📈 연령대별 사고 위험도 분석")
-            
-            # 1) 데이터 정렬을 위한 순서 정의
-            age_order = ['19세 이하', '20-29세', '30-39세', '40-49세', '50-59세', '60-64세', '65세 이상']
-            
-            # 1. 연령대별 사고율
-            st.header("1) 연령대별 사고율 비교")
-            query1 = """
-            SELECT a.age_group, (CAST(a.accident_count AS FLOAT) / b.license_count) * 100 as accident_rate
-            FROM 가해운전자 a
-            JOIN 면허소지자 b ON a.age_group = b.age_group
-            """
-            df1 = run_query(query1)
-            
-            # 순서 적용
-            df1['age_group'] = pd.Categorical(df1['age_group'], categories=age_order, ordered=True)
-            df1 = df1.sort_values('age_group')
-            
-            df1['group'] = df1['age_group'].apply(
-                lambda x: '고령층(60세 이상)' if x in ['60-64세', '65세 이상'] else '기타 연령'
-            )
-            
-            fig1 = px.bar(df1, x='age_group', y='accident_rate', color='group',
-                          color_discrete_map={'고령층(60세 이상)': 'crimson', '기타 연령': 'lightgray'})
-            st.plotly_chart(fig1, use_container_width=True)
-            
-            st.divider() 
-            st.subheader("🔍 SQL 및 인사이트")
-            st.code(query1, language='sql')
-            st.write("""
-            - **인사이트**: 19세 이하 운전자의 사고율이 가장 높게 나타났습니다.
-            - 본 연구의 정책 대상은 고령 운전자이므로, 60세 이상 구간을 주목해야 합니다.
-            """)
+    elif menu == "연령별 사고율 분석":
+        st.title("📈 연령대별 사고 위험도 분석")
+        
+        # 정렬 순서 정의
+        age_order = ['19세 이하', '20-29세', '30-39세', '40-49세', '50-59세', '60-64세', '65세 이상']
+        
+        st.header("1) 연령대별 사고율 비교")
+        query1 = """
+        SELECT a.age_group, (CAST(a.accident_count AS FLOAT) / b.license_count) * 100 as accident_rate
+        FROM 가해운전자 a
+        JOIN 면허소지자 b ON a.age_group = b.age_group
+        """
+        df1 = run_query(query1)
+        df1['age_group'] = pd.Categorical(df1['age_group'], categories=age_order, ordered=True)
+        df1 = df1.sort_values('age_group')
+        
+        df1['group'] = df1['age_group'].apply(lambda x: '고령층(60세 이상)' if x in ['60-64세', '65세 이상'] else '기타 연령')
+        fig1 = px.bar(df1, x='age_group', y='accident_rate', color='group', 
+                      color_discrete_map={'고령층(60세 이상)': 'crimson', '기타 연령': 'lightgray'})
+        st.plotly_chart(fig1, use_container_width=True)
+        
+        st.divider()
+        st.subheader("🔍 SQL 및 인사이트")
+        st.code(query1, language='sql')
+        st.write("- **인사이트**: 19세 이하 운전자의 사고율이 가장 높습니다. 정책 대상인 고령층(60세 이상)의 사고율 추세에 주목해야 합니다.")
 
-            # 2. 상대 위험도 (들여쓰기 주의!)
-            st.header("2) 고령 vs 비고령 상대 위험도")
-            query2 = """
-            SELECT 
-                CASE WHEN age_group IN ('60-64세', '65세 이상') THEN '고령운전자'
-                     ELSE '비고령운전자' END as group_type,
-                SUM(accident_count) as total_acc,
-                SUM(license_count) as total_lic
-            FROM 가해운전자 a JOIN 면허소지자 b ON a.age_group = b.age_group
-            GROUP BY group_type
-            """
-            # ... (이후 기존의 df2 계산 및 fig2 출력 로직 계속)
-
+        st.header("2) 고령 vs 비고령 상대 위험도")
+        query2 = """
+        SELECT 
+            CASE WHEN age_group IN ('60-64세', '65세 이상') THEN '고령운전자' 
+            ELSE '비고령운전자' END as group_type,
+            SUM(accident_count) as total_acc, SUM(license_count) as total_lic
+        FROM 가해운전자 a JOIN 면허소지자 b ON a.age_group = b.age_group
+        GROUP BY group_type
+        """
         df2 = run_query(query2)
         df2['rate'] = (df2['total_acc'] / df2['total_lic']) * 100
-
-        if '고령운전자' in df2['group_type'].values:
-            elderly_rate = df2.loc[df2['group_type']=='고령운전자', 'rate'].values[0]
-            normal_rate = df2.loc[df2['group_type']=='비고령운전자', 'rate'].values[0]
-            relative_risk = elderly_rate / normal_rate
-        else:
-            relative_risk = None
-
-        fig2 = px.bar(
-            df2,
-            x='group_type',
-            y='rate',
-            color='group_type',
-            title="고령 vs 비고령 사고율 비교",
-            color_discrete_map={
-                '고령운전자': 'crimson',
-                '비고령운전자': 'lightgray'
-            }
-        )
-        st.plotly_chart(fig2, use_container_width=True)
-        if relative_risk:
-            st.metric("고령층 상대 위험도", f"{relative_risk:.2f} 배")
-        else:
-            st.warning("고령운전자 데이터가 올바르게 계산되지 않았습니다.")
-
-
         
-        with st.expander("🔍 SQL 및 인사이트"):
-            st.code(query2, language='sql')
-            st.write(f"""
-            - **인사이트**: 고령 운전자의 사고 위험도는 비고령 운전자보다 약 **{relative_risk:.2f}배** 높게 나타났다.  
-            - 특히 60세 이후부터 사고율이 증가하는 경향이 확인되며, 이는 고령화에 따른 인지·반응 능력 저하와 관련된 것으로 해석된다.  
-            """)
-
+        # 위험도 계산
+        elderly = df2[df2['group_type']=='고령운전자']['rate'].values[0]
+        normal = df2[df2['group_type']=='비고령운전자']['rate'].values[0]
+        relative_risk = elderly / normal
+        
+        st.metric("고령층 상대 위험도", f"{relative_risk:.2f} 배")
+        st.code(query2, language='sql')
 
     # --- [섹션 3: 지역별 면허반납 분석] ---
     elif menu == "지역별 면허반납 분석":
         st.title("📍 지역별 면허 반납 정책 현황")
-        
         query3 = """
-        SELECT a.region, 
-               (CAST(a.return_count AS FLOAT) / b.elderly_population) * 100 as return_rate
-        FROM 면허반납 a
-        JOIN 인구비 b ON a.region = b.region
-        ORDER BY return_rate DESC
+        SELECT a.region, (CAST(a.return_count AS FLOAT) / b.elderly_population) * 100 as return_rate
+        FROM 면허반납 a JOIN 인구비 b ON a.region = b.region
         """
         df3 = run_query(query3)
-        
-        fig3 = px.bar(df3, x='region', y='return_rate', color='return_rate',
-                     title="지역별 고령 인구 대비 면허 반납율(%)", color_continuous_scale='GnBu')
+        fig3 = px.bar(df3, x='region', y='return_rate', color='return_rate', color_continuous_scale='GnBu')
         st.plotly_chart(fig3, use_container_width=True)
-
-        st.subheader("💡 정책 효과 시뮬레이션")
-        st.write("서울시 사례(반납율 1%p↑ → 사고 200건↓)를 적용한 예상치입니다.")
-        target = st.slider("목표 반납율 추가 달성치(%p)", 0.0, 5.0, 1.0)
-        expected_reduction = target * 200
-        st.success(f"전국 반납율이 현재보다 {target}%p 높아지면, 연간 고령자 사고를 약 {expected_reduction:,.0f}건 예방할 수 있습니다.")
-
-        with st.expander("🔍 SQL 및 인사이트"):
-            st.code(query3, language='sql')
-            st.write("- **인사이트**: 지역별로 반납율 편차가 큽니다. 반납율이 높은 지역의 벤치마킹이 필요하며, 낮은 지역은 그 원인을 분석해야 합니다.")
 
     # --- [섹션 4: 대중교통과 반납율 관계] ---
     elif menu == "대중교통과 반납율 관계":
         st.title("🚌 대중교통 인프라가 반납율에 미치는 영향")
-        
         query4 = """
-        SELECT a.region,
-               (CAST(a.senior AS FLOAT) / b.total_population) as transport_index,
+        SELECT a.region, (CAST(a.senior AS FLOAT) / b.total_population) as transport_index,
                (CAST(c.return_count AS FLOAT) / b.elderly_population) * 100 as return_rate
-        FROM 대중교통 a
-        JOIN 인구비 b ON a.region = b.region
+        FROM 대중교통 a JOIN 인구비 b ON a.region = b.region
         JOIN 면허반납 c ON a.region = c.region
         """
         df4 = run_query(query4)
-        
-        fig4 = px.scatter(df4, x='transport_index', y='return_rate', text='region',
-                         title="대중교통 이용 수준 vs 면허 반납율 상관관계",
-                         trendline="ols", labels={'transport_index':'대중교통 이용지표', 'return_rate':'면허 반납율(%)'})
+        fig4 = px.scatter(df4, x='transport_index', y='return_rate', text='region', trendline="ols")
         st.plotly_chart(fig4, use_container_width=True)
-        
-        corr = df4['transport_index'].corr(df4['return_rate'])
-        st.info(f"분석 결과: 대중교통 지표와 면허 반납율 간의 상관계수는 **{corr:.2f}**입니다.")
-
-        with st.expander("🔍 SQL 및 인사이트"):
-            st.code(query4, language='sql')
-            st.write("- **인사이트**: 상관관계가 높게 나타난다면, **'운전대를 놓아도 이동할 수 있는 환경'**이 조성되어야 면허 반납 정책이 성공할 수 있음을 입증합니다.")
 
     # --- [섹션 5: 결론 및 정책 제안] ---
     elif menu == "결론 및 정책 제안":
         st.title("🏁 분석 결론 및 정책 제안")
-        
         st.markdown("""
         ### 1. 데이터 분석 요약
-        *   **고령자 사고 위험성**: 비고령자 대비 사고율이 높은 것은 사실이나, 연령대별로 위험도가 다름.
-        *   **반납 정책의 실효성**: 반납율이 높을수록 사고 감소 효과가 뚜렷함(서울시 사례 기반).
-        *   **결정적 요인**: 대중교통 이용이 편리한 지역일수록 고령 운전자의 면허 반납이 활발함.
-
+        * 고령자 사고 위험성은 실제로 높으며, 대중교통 인프라가 반납율을 결정합니다.
         ### 2. 정책 제안
-        *   **[인프라 강화]** 농어촌 등 대중교통 취약 지역은 면허 반납 시 '수요응답형 택시(마을택시)' 쿠폰 지원 확대.
-        *   **[타겟팅 홍보]** 상대적 사고 위험도가 급격히 높아지는 75세 이상 구간에 대한 집중 반납 캠페인 실시.
-        *   **[인센티브 다양화]** 단순 일회성 현금 지원보다는 지속적인 '교통 복지 포인트' 형태로 전환하여 이동권 보장.
+        * 수요응답형 택시 지원, 이동권 보장 중심의 정책이 필요합니다.
         """)
         st.balloons()
