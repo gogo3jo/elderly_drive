@@ -72,25 +72,46 @@ else:
         st.code(query1, language='sql')
         st.write("- **인사이트**: 19세 이하 운전자의 사고율이 가장 높습니다. 정책 대상인 고령층(60세 이상)의 사고율 추세에 주목해야 합니다.")
 
+        # 2) 고령 vs 비고령 상대 위험도 (65세 이상만 고령운전자)
         st.header("2) 고령 vs 비고령 상대 위험도")
+        
+        # 1. 데이터 가져오기
         query2 = """
-        SELECT 
-            CASE WHEN age_group IN ('60-64세', '65세 이상') THEN '고령운전자' 
-            ELSE '비고령운전자' END as group_type,
-            SUM(accident_count) as total_acc, SUM(license_count) as total_lic
-        FROM 가해운전자 a JOIN 면허소지자 b ON a.age_group = b.age_group
-        GROUP BY group_type
+        SELECT a.age_group, a.accident_count, b.license_count
+        FROM 가해운전자 a 
+        JOIN 면허소지자 b ON a.age_group = b.age_group
         """
         df2 = run_query(query2)
-        df2['rate'] = (df2['total_acc'] / df2['total_lic']) * 100
         
-        # 위험도 계산
-        elderly = df2[df2['group_type']=='고령운전자']['rate'].values[0]
-        normal = df2[df2['group_type']=='비고령운전자']['rate'].values[0]
-        relative_risk = elderly / normal
+        # 2. 파이썬에서 그룹핑 (65세 이상만 고령운전자)
+        df2['group_type'] = df2['age_group'].apply(
+            lambda x: '고령운전자' if x == '65세 이상' else '비고령운전자'
+        )
         
-        st.metric("고령층 상대 위험도", f"{relative_risk:.2f} 배")
-        st.code(query2, language='sql')
+        # 3. 그룹별 합계 계산
+        df_grouped = df2.groupby('group_type')[['accident_count', 'license_count']].sum().reset_index()
+        df_grouped['rate'] = (df_grouped['accident_count'] / df_grouped['license_count']) * 100
+        
+        # 4. 상대 위험도 계산 (데이터가 모두 존재하는지 확인)
+        try:
+            # group_type에 '고령운전자'와 '비고령운전자'가 모두 있는지 확인 후 계산
+            elderly = df_grouped.loc[df_grouped['group_type']=='고령운전자', 'rate'].values[0]
+            normal = df_grouped.loc[df_grouped['group_type']=='비고령운전자', 'rate'].values[0]
+            relative_risk = elderly / normal
+            
+            # 5. 결과 시각화
+            fig2 = px.bar(df_grouped, x='group_type', y='rate', color='group_type',
+                          color_discrete_map={'고령운전자': 'crimson', '비고령운전자': 'lightgray'})
+            st.plotly_chart(fig2, use_container_width=True)
+            
+            # 6. 결과 표시
+            st.metric("고령층 상대 위험도", f"{relative_risk:.2f} 배")
+            st.code(query2, language='sql')
+            
+        except Exception as e:
+            st.error("데이터 계산 오류: 그룹핑된 데이터가 충분하지 않습니다.")
+            st.write("상세 정보:", e)
+
 
     # --- [섹션 3: 지역별 면허반납 분석] ---
     elif menu == "지역별 면허반납 분석":
