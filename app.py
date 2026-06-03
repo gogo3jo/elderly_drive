@@ -9,7 +9,7 @@ st.set_page_config(page_title="고령 운전자 정책 분석 대시보드", lay
 
 # --- 2. DB 연결 및 에러 처리 ---
 # 파일명이 'elderly_right.db'라고 가정했습니다. 다르면 수정하세요.
-DB_FILE = 'elderly_right.db'
+DB_FILE = 'drive.db'
 
 def get_connection():
     if not os.path.exists(DB_FILE):
