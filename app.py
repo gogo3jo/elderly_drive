@@ -62,16 +62,30 @@ else:
         JOIN 면허소지자 b ON a.age_group = b.age_group
         ORDER BY accident_rate DESC
         """
-        df1 = run_query(query1)
-        
-        fig1 = px.bar(df1, x='age_group', y='accident_rate', color='accident_rate',
-                     title="면허 소지자 100명당 사고 건수", labels={'accident_rate':'사고율(%)'},
-                     color_continuous_scale='Reds')
+        df1['group'] = df1['age_group'].apply(
+            lambda x: '고령층(60세 이상)' if x in ['60-64세', '65세 이상'] else '기타 연령'
+        )
+
+        fig1 = px.bar(
+            df1,
+            x='age_group',
+            y='accident_rate',
+            color='group',
+            title="면허 소지자 100명당 사고 건수",
+            labels={'accident_rate': '사고율(%)'},
+            color_discrete_map={
+                '고령층(60세 이상)': 'crimson',
+                '기타 연령': 'lightgray'
+            }
+        )
+
         st.plotly_chart(fig1, use_container_width=True)
-        
-        with st.expander("🔍 SQL 및 인사이트"):
-            st.code(query1, language='sql')
-            st.write("- **인사이트**: 단순 사고 건수가 아닌 면허 소지자 대비 비율을 보았을 때, 특정 연령대(고령층)의 사고 확률이 상대적으로 높은지 한눈에 파악할 수 있습니다.")
+
+        st.write("""
+     - **인사이트**: 19세 이하 운전자의 사고율이 가장 높게 나타났는데, 이는 운전 경험 부족과 초보 운전자 비율이 높은 구조적 특성 때문으로 해석된다.  
+     - 그러나 본 연구의 정책 대상은 고령 운전자이므로, **60세 이상 구간을 중심으로 사고율 증가 추세에 주목할 필요가 있다.**
+     """)
+
 
         # 2. 상대 위험도
         st.header("2) 고령 vs 비고령 상대 위험도")
