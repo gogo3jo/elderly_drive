@@ -40,7 +40,7 @@ else:
         st.subheader("사회적 인식과 데이터의 괴리")
         st.markdown("""
         최근 고령 운전자 사고가 연일 보도되면서 사회적 불안감이 커지고 있습니다. 
-        하지만 **'단순히 나이가 많아서 위험한가?'** 혹은 **'면허 반납이 유일한 해결책인가?'**에 대한 질문에는 데이터로 답해야 합니다.
+        하지만 **'단순히 나이가 많아서 위험한가?'** 혹은 **'면허 반납이 유일한 해결책인가?'** 에 대한 질문에는 데이터로 답해야 합니다.
         
         본 대시보드는 다음의 흐름을 따릅니다:
         1. **위험 진단**: 연령대별 실제 사고율 비교
@@ -62,6 +62,8 @@ else:
         JOIN 면허소지자 b ON a.age_group = b.age_group
         ORDER BY accident_rate DESC
         """
+
+        df1 = run_query(query1)
         df1['group'] = df1['age_group'].apply(
             lambda x: '고령층(60세 이상)' if x in ['60-64세', '65세 이상'] else '기타 연령'
         )
@@ -80,40 +82,69 @@ else:
         )
 
         st.plotly_chart(fig1, use_container_width=True)
-
-        st.write("""
-     - **인사이트**: 19세 이하 운전자의 사고율이 가장 높게 나타났는데, 이는 운전 경험 부족과 초보 운전자 비율이 높은 구조적 특성 때문으로 해석된다.  
-     - 그러나 본 연구의 정책 대상은 고령 운전자이므로, **60세 이상 구간을 중심으로 사고율 증가 추세에 주목할 필요가 있다.**
-     """)
+        
+        with st.expander("🔍 SQL 및 인사이트"):
+            st.code(query1, language='sql')
+            st.write("""
+            - **인사이트**: 19세 이하 운전자의 사고율이 가장 높게 나타났는데, 이는 운전 경험 부족과 초보 운전자 비율이 높은 구조적 특성 때문으로 해석된다.  
+            - 그러나 본 연구의 정책 대상은 고령 운전자이므로, **60세 이상 구간을 중심으로 사고율 증가 추세에 주목할 필요가 있다.**
+            """)
 
 
         # 2. 상대 위험도
         st.header("2) 고령 vs 비고령 상대 위험도")
         query2 = """
+
         SELECT 
-            CASE WHEN age_group IN ('65세-69세', '70세-74세', '75세-79세', '80세-84세', '85세이상') THEN '고령운전자'
-            ELSE '비고령운전자' END as group_type,
+            CASE 
+                WHEN age_group = '65세 이상' THEN '고령운전자'
+                ELSE '비고령운전자' 
+            END as group_type,
             SUM(accident_count) as total_acc,
             SUM(license_count) as total_lic
-        FROM (SELECT a.age_group, a.accident_count, b.license_count 
-              FROM 가해운전자 a JOIN 면허소지자 b ON a.age_group = b.age_group)
+        FROM (
+            SELECT a.age_group, a.accident_count, b.license_count 
+            FROM 가해운전자 a 
+            JOIN 면허소지자 b ON a.age_group = b.age_group
+        )
         GROUP BY group_type
         """
         df2 = run_query(query2)
         df2['rate'] = (df2['total_acc'] / df2['total_lic']) * 100
-        
-        elderly_rate = df2.loc[df2['group_type']=='고령운전자', 'rate'].values[0]
-        normal_rate = df2.loc[df2['group_type']=='비고령운전자', 'rate'].values[0]
-        relative_risk = elderly_rate / normal_rate
 
-        fig2 = px.pie(df2, values='rate', names='group_type', title="집단별 평균 사고율 비중", hole=0.4)
+        if '고령운전자' in df2['group_type'].values:
+            elderly_rate = df2.loc[df2['group_type']=='고령운전자', 'rate'].values[0]
+            normal_rate = df2.loc[df2['group_type']=='비고령운전자', 'rate'].values[0]
+            relative_risk = elderly_rate / normal_rate
+        else:
+            relative_risk = None
+
+        fig2 = px.bar(
+            df2,
+            x='group_type',
+            y='rate',
+            color='group_type',
+            title="고령 vs 비고령 사고율 비교",
+            color_discrete_map={
+                '고령운전자': 'crimson',
+                '비고령운전자': 'lightgray'
+            }
+        )
         st.plotly_chart(fig2, use_container_width=True)
-        
-        st.metric("고령층 상대 위험도", f"{relative_risk:.2f} 배", help="비고령층 사고율 대비 고령층의 사고율")
+        if relative_risk:
+            st.metric("고령층 상대 위험도", f"{relative_risk:.2f} 배")
+        else:
+            st.warning("고령운전자 데이터가 올바르게 계산되지 않았습니다.")
+
+
         
         with st.expander("🔍 SQL 및 인사이트"):
             st.code(query2, language='sql')
-            st.write(f"- **인사이트**: 고령 운전자의 사고 위험도가 비고령자보다 약 **{relative_risk:.2f}배** 높게 나타납니다. 이는 집중 관리가 필요함을 시사합니다.")
+            st.write(f"""
+            - **인사이트**: 고령 운전자의 사고 위험도는 비고령 운전자보다 약 **{relative_risk:.2f}배** 높게 나타났다.  
+            - 특히 60세 이후부터 사고율이 증가하는 경향이 확인되며, 이는 고령화에 따른 인지·반응 능력 저하와 관련된 것으로 해석된다.  
+            """)
+
 
     # --- [섹션 3: 지역별 면허반납 분석] ---
     elif menu == "지역별 면허반납 분석":
