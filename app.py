@@ -155,16 +155,6 @@ else:
         fig.update_geos(fitbounds="locations", visible=False)
         st.plotly_chart(fig, use_container_width=True)
 
-
-        st.subheader("💡 정책 효과 시뮬레이션")
-        # ... (기존 슬라이더 및 success 코드 그대로 유지)
-
-        # 매핑 안 된 지역 확인
-        missing = df3[df3['region_full'].isna()]
-        st.write("매핑 실패한 지역:", missing)
-
-        st.plotly_chart(fig, use_container_width=True)
-
         # 상위/하위 지역 정보 요약
         st.subheader("📊 지역별 반납율 상세 현황")
         
@@ -182,6 +172,14 @@ else:
             st.write("⚠️ **하위 반납율 지역 (Bottom 3)**")
             st.table(sorted_df[['region', 'return_rate']].tail(3).reset_index(drop=True).style.format({"return_rate": "{:.2f}%"}))
 
+        st.subheader("💡 정책 효과 시뮬레이션")
+        # ... (기존 슬라이더 및 success 코드 그대로 유지)
+
+        # 매핑 안 된 지역 확인
+        missing = df3[df3['region_full'].isna()]
+        st.write("매핑 실패한 지역:", missing)
+
+        
 
     # --- [섹션 4: 대중교통과 반납율 관계] ---
     elif menu == "대중교통과 반납율 관계":
