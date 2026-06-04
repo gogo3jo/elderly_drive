@@ -184,40 +184,37 @@ else:
             st.write("- **인사이트**: 지역별로 반납율 편차가 큽니다. 반납율이 높은 지역의 벤치마킹이 필요하며, 낮은 지역은 그 원인을 분석해야 합니다.")
 
 
-    # --- [섹션 4: 대중교통과 반납율 관계] ---
+        # --- [섹션 4: 대중교통과 반납율 관계] ---
     elif menu == "대중교통과 반납율 관계":
-        st.title("🚌 대중교통 인프라가 반납율에 미치는 영향")
-        query4 = """
-        SELECT a.region, (CAST(a.senior AS FLOAT) / b.total_population) as transport_index,
-               (CAST(c.return_count AS FLOAT) / b.elderly_population) * 100 as return_rate
-        FROM 대중교통 a JOIN 인구비 b ON a.region = b.region
+        st.title("🚌 대중교통 인프라 vs 면허 반납율")
+        
+        # 1. 데이터 가져오기 및 데이터프레임 생성 (df4를 df로 통일)
+        query = """
+        SELECT a.region, a.senior, b.total_population, b.elderly_population, c.return_count 
+        FROM 대중교통 a 
+        JOIN 인구비 b ON a.region = b.region 
         JOIN 면허반납 c ON a.region = c.region
         """
-        df4 = run_query(query4)
-        fig4 = px.scatter(df4, x='transport_index', y='return_rate', text='region', 
-                  title="대중교통 이용 수준 vs 면허 반납율")
-        fig4.update_traces(textposition='top center') # 라벨을 점 위로 올리기
-        st.plotly_chart(fig4, use_container_width=True)
-
+        df = run_query(query)
+        df['transport_index'] = df['senior'] / df['total_population']
+        df['return_rate'] = (df['return_count'] / df['elderly_population']) * 100
+        
+        # 2. 산점도 분석
         st.subheader("상관관계 분석")
         fig_scatter = px.scatter(df, x='transport_index', y='return_rate', text='region', 
                                  title="대중교통 이용 수준 vs 면허 반납율", trendline="ols")
         st.plotly_chart(fig_scatter, use_container_width=True)
         
-        st.divider() # 구분선
+        st.divider()
 
-        # 2. 아래에 지도 두 개를 나란히 배치 (공간적 패턴 비교)
+        # 3. 지도 시각화 (공간적 분포 비교)
         st.subheader("공간적 분포 비교")
-        col1, col2 = st.columns(2)
-
-        # 2. 지도 매핑용 전처리 (region_full 매핑)
         name_mapping = {'서울':'서울특별시', '부산':'부산광역시', '대구':'대구광역시', '인천':'인천광역시', 
                         '광주':'광주광역시', '대전':'대전광역시', '울산':'울산광역시', '세종':'세종특별자치시', 
                         '경기':'경기도', '강원':'강원도', '충북':'충청북도', '충남':'충청남도', 
                         '전북':'전라북도', '전남':'전라남도', '경북':'경상북도', '경남':'경상남도', '제주':'제주도'}
         df['region_full'] = df['region'].map(name_mapping)
         
-        # 3. 사이드바이사이드 지도 시각화
         col1, col2 = st.columns(2)
         geojson_url = "https://raw.githubusercontent.com/southkorea/southkorea-maps/master/kostat/2013/json/skorea_provinces_geo.json"
         
@@ -229,13 +226,14 @@ else:
             st.plotly_chart(fig1, use_container_width=True)
             
         with col2:
-            st.write("📍 면허 반납율")
+            st.write("#### 📍 면허 반납율")
             fig2 = px.choropleth(df, geojson=geojson_url, locations='region_full', featureidkey="properties.name",
                                  color='return_rate', color_continuous_scale="Blues")
             fig2.update_geos(fitbounds="locations", visible=False)
             st.plotly_chart(fig2, use_container_width=True)
             
-        st.info("💡 두 지도의 색상 패턴이 일치할수록 대중교통과 면허 반납이 밀접한 관련이 있음을 시사합니다.")
+        st.info("💡 두 지도의 색상 패턴이 일치할
+
 
     # --- [섹션 5: 결론 및 정책 제안] ---
     elif menu == "결론 및 정책 제안":
