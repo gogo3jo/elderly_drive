@@ -232,7 +232,7 @@ else:
             fig2.update_geos(fitbounds="locations", visible=False)
             st.plotly_chart(fig2, use_container_width=True)
             
-        st.info("💡 두 지도의 색상 패턴이 일치할
+        st.info("💡 두 지도의 색상 패턴이 일치할수록 대중교통과 면허 반납이 밀접한 관련이 있음을 시사합니다.")
 
 
     # --- [섹션 5: 결론 및 정책 제안] ---
