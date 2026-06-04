@@ -73,4 +73,4 @@ else:
         query = "SELECT a.region, a.senior, b.total_population, b.elderly_population, c.return_count FROM 대중교통 a JOIN 인구비 b ON a.region = b.region JOIN 면허반납 c ON a.region = c.region"
         df = run_query(query)
         df['transport_index'] = df['senior'] / df['total_population']
-        df['return_rate'] = (df['return_count'] / df
+        df['return_rate'] = (df['return_count'] / df)
