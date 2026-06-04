@@ -194,7 +194,9 @@ else:
         JOIN 면허반납 c ON a.region = c.region
         """
         df4 = run_query(query4)
-        fig4 = px.scatter(df4, x='transport_index', y='return_rate', text='region', trendline="ols")
+        fig4 = px.scatter(df4, x='transport_index', y='return_rate', text='region', 
+                  title="대중교통 이용 수준 vs 면허 반납율")
+        fig4.update_traces(textposition='top center') # 라벨을 점 위로 올리기
         st.plotly_chart(fig4, use_container_width=True)
 
     # --- [섹션 5: 결론 및 정책 제안] ---
