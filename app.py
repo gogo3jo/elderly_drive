@@ -172,14 +172,17 @@ else:
             st.write("⚠️ **하위 반납율 지역 (Bottom 3)**")
             st.table(sorted_df[['region', 'return_rate']].tail(3).reset_index(drop=True).style.format({"return_rate": "{:.2f}%"}))
 
+        # 4. 정책 효과 시뮬레이션
         st.subheader("💡 정책 효과 시뮬레이션")
-        # ... (기존 슬라이더 및 success 코드 그대로 유지)
+        st.write("서울시 사례(반납율 1%p↑ → 사고 200건↓)를 적용한 예상치입니다.")
+        target = st.slider("목표 반납율 추가 달성치(%p)", 0.0, 5.0, 1.0)
+        expected_reduction = target * 200
+        st.success(f"전국 반납율이 현재보다 {target}%p 높아지면, 연간 고령자 사고를 약 {expected_reduction:,.0f}건 예방할 수 있습니다.")
 
-        # 매핑 안 된 지역 확인
-        missing = df3[df3['region_full'].isna()]
-        st.write("매핑 실패한 지역:", missing)
+        with st.expander("🔍 SQL 및 인사이트"):
+            st.code(query3, language='sql')
+            st.write("- **인사이트**: 지역별로 반납율 편차가 큽니다. 반납율이 높은 지역의 벤치마킹이 필요하며, 낮은 지역은 그 원인을 분석해야 합니다.")
 
-        
 
     # --- [섹션 4: 대중교통과 반납율 관계] ---
     elif menu == "대중교통과 반납율 관계":
