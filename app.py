@@ -179,9 +179,13 @@ else:
         expected_reduction = target * 200
         st.success(f"전국 반납율이 현재보다 {target}%p 높아지면, 연간 고령자 사고를 약 {expected_reduction:,.0f}건 예방할 수 있습니다.")
 
-        with st.expander("🔍 SQL 및 인사이트"):
-            st.code(query3, language='sql')
-            st.write("- **인사이트**: 지역별로 반납율 편차가 큽니다. 반납율이 높은 지역의 벤치마킹이 필요하며, 낮은 지역은 그 원인을 분석해야 합니다.")
+        st.divider()
+        st.subheader("🔍 SQL 및 인사이트")
+        st.code(query3, language='sql')
+        st.write("""
+        - **인사이트**: 지역별로 반납율 편차가 큽니다. 반납율이 높은 지역의 벤치마킹이 필요하며, 
+          낮은 지역은 그 원인을 분석해야 합니다.
+        """)
 
 
         # --- [섹션 4: 대중교통과 반납율 관계] ---
@@ -240,7 +244,18 @@ else:
             st.plotly_chart(fig2, use_container_width=True)
             
         st.info("💡 두 지도의 색상 패턴이 일치할수록 대중교통과 면허 반납이 밀접한 관련이 있음을 시사합니다.")
-
+        
+        st.divider()
+        st.subheader("🔍 SQL 및 인사이트")
+        query_text = """
+        SELECT a.region, a.senior, b.total_population, b.elderly_population, c.return_count 
+        FROM 대중교통 a JOIN 인구비 b ON a.region = b.region JOIN 면허반납 c ON a.region = c.region
+        """
+        st.code(query_text, language='sql')
+        st.write("""
+        - **인사이트**: 상관관계가 높게 나타날수록, **'운전대를 놓아도 이동할 수 있는 환경'**이 조성되어야 
+          면허 반납 정책이 성공할 수 있음을 시사합니다.
+        """)
 
     # --- [섹션 5: 결론 및 정책 제안] ---
     elif menu == "결론 및 정책 제안":
