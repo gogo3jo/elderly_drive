@@ -125,9 +125,7 @@ else:
         """
         df3 = run_query(query3)
 
-        # 2. 지역명 매핑 (지도 라이브러리와 DB 이름 맞추기)
-        # 중요: DB에 있는 region 이름이 여기 키(Key) 값과 같아야 합니다.
-                # GeoJSON 파일 내부에 저장된 이름에 맞게 수정
+        # 2. 지역명 매핑 
         name_mapping = {
             '서울': '서울특별시', '부산': '부산광역시', '대구': '대구광역시', 
             '인천': '인천광역시', '광주': '광주광역시', '대전': '대전광역시', 
@@ -151,7 +149,7 @@ else:
             locations='region_full',
             featureidkey="properties.name",
             color='return_rate',
-            color_continuous_scale="Reds",
+            color_continuous_scale="Blues",
             title="시도별 고령 인구 대비 면허 반납율"
         )
         fig.update_geos(fitbounds="locations", visible=False)
