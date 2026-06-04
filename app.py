@@ -157,6 +157,10 @@ else:
         st.subheader("💡 정책 효과 시뮬레이션")
         # ... (기존 슬라이더 및 success 코드 그대로 유지)
 
+        # 매핑 안 된 지역 확인
+        missing = df3[df3['region_full'].isna()]
+        st.write("매핑 실패한 지역:", missing)
+
 
     # --- [섹션 4: 대중교통과 반납율 관계] ---
     elif menu == "대중교통과 반납율 관계":
