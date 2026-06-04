@@ -54,18 +54,6 @@ else:
         
         st.header("1) 연령대별 사고율 비교")
 
-        # 그래프(왼쪽, 1.5)와 SQL(오른쪽, 1)을 위한 컬럼 분할
-        col_main, col_sql = st.columns([1.5, 1])
-        
-        with col_main:
-            fig1 = px.bar(df1, x='age_group', y='accident_rate', color='group', 
-                          color_discrete_map={'고령층(60세 이상)': 'crimson', '기타 연령': 'lightgray'})
-            st.plotly_chart(fig1, use_container_width=True)
-            
-        with col_sql:
-            st.markdown("**사용된 SQL 쿼리**")
-            st.code(query1, language='sql')
-
         query1 = """
         SELECT a.age_group, (CAST(a.accident_count AS FLOAT) / b.license_count) * 100 as accident_rate
         FROM 가해운전자 a
@@ -80,9 +68,17 @@ else:
                       color_discrete_map={'고령층(60세 이상)': 'crimson', '기타 연령': 'lightgray'})
         st.plotly_chart(fig1, use_container_width=True)
         
-        st.divider()
-        st.subheader("🔍 SQL 및 인사이트")
-        st.code(query1, language='sql')
+        # 그래프(왼쪽, 1.5)와 SQL(오른쪽, 1)을 위한 컬럼 분할
+        col_main, col_sql = st.columns([1.5, 1])
+        
+        with col_main:
+            fig1 = px.bar(df1, x='age_group', y='accident_rate', color='group', 
+                          color_discrete_map={'고령층(60세 이상)': 'crimson', '기타 연령': 'lightgray'})
+            st.plotly_chart(fig1, use_container_width=True)
+            
+        with col_sql:
+            st.markdown("**사용된 SQL 쿼리**")
+            st.code(query1, language='sql')
 
         # 그래프와 SQL 아래에 전체 인사이트 배치
         st.markdown("**분석 인사이트**")
