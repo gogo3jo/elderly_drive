@@ -74,7 +74,7 @@ else:
         with col_main:
             fig1 = px.bar(df1, x='age_group', y='accident_rate', color='group', 
                           color_discrete_map={'고령층(60세 이상)': 'crimson', '기타 연령': 'lightgray'})
-            st.plotly_chart(fig1, use_container_width=True)
+            st.plotly_chart(fig1, use_container_width=True, key="age_accident_chart")
             
         with col_sql:
             st.markdown("**사용된 SQL 쿼리**")
