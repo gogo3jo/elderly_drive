@@ -64,9 +64,6 @@ else:
         df1 = df1.sort_values('age_group')
         
         df1['group'] = df1['age_group'].apply(lambda x: '고령층(60세 이상)' if x in ['60-64세', '65세 이상'] else '기타 연령')
-        fig1 = px.bar(df1, x='age_group', y='accident_rate', color='group', 
-                      color_discrete_map={'고령층(60세 이상)': 'crimson', '기타 연령': 'lightgray'})
-        st.plotly_chart(fig1, use_container_width=True)
         
         # 그래프(왼쪽, 1.5)와 SQL(오른쪽, 1)을 위한 컬럼 분할
         col_main, col_sql = st.columns([1.5, 1])
