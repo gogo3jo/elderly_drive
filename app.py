@@ -114,15 +114,49 @@ else:
 
 
     # --- [섹션 3: 지역별 면허반납 분석] ---
+
     elif menu == "지역별 면허반납 분석":
         st.title("📍 지역별 면허 반납 정책 현황")
+        
+        # 1. 데이터 가져오기
         query3 = """
         SELECT a.region, (CAST(a.return_count AS FLOAT) / b.elderly_population) * 100 as return_rate
         FROM 면허반납 a JOIN 인구비 b ON a.region = b.region
         """
         df3 = run_query(query3)
-        fig3 = px.bar(df3, x='region', y='return_rate', color='return_rate', color_continuous_scale='GnBu')
-        st.plotly_chart(fig3, use_container_width=True)
+
+        # 2. 지역명 매핑 (지도 라이브러리와 DB 이름 맞추기)
+        # 중요: DB에 있는 region 이름이 여기 키(Key) 값과 같아야 합니다.
+        name_mapping = {
+            '서울': '서울특별시', '부산': '부산광역시', '대구': '대구광역시', 
+            '인천': '인천광역시', '광주': '광주광역시', '대전': '대전광역시', 
+            '울산': '울산광역시', '세종': '세종특별자치시', '경기': '경기도', 
+            '강원': '강원특별자치도', '충북': '충청북도', '충남': '충청남도', 
+            '전북': '전북특별자치도', '전남': '전라남도', '경북': '경상북도', 
+            '경남': '경상남도', '제주': '제주특별자치도'
+        }
+        df3['region_full'] = df3['region'].map(name_mapping)
+
+        # 3. 지도 시각화
+        # 대한민국 시도 경계 GeoJSON 데이터 (온라인 공개 URL)
+        geojson_url = "https://raw.githubusercontent.com/southkorea/southkorea-maps/master/kostat/2013/json/skorea_provinces_geo.json"
+        
+        fig = px.choropleth(
+            df3,
+            geojson=geojson_url,
+            locations='region_full',
+            featureidkey="properties.name",
+            color='return_rate',
+            color_continuous_scale="Reds",
+            title="시도별 고령 인구 대비 면허 반납율"
+        )
+        fig.update_geos(fitbounds="locations", visible=False)
+        st.plotly_chart(fig, use_container_width=True)
+
+        # 나머지 기존 시뮬레이션 코드...
+        st.subheader("💡 정책 효과 시뮬레이션")
+        # ... (기존 슬라이더 및 success 코드 그대로 유지)
+
 
     # --- [섹션 4: 대중교통과 반납율 관계] ---
     elif menu == "대중교통과 반납율 관계":
