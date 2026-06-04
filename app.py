@@ -53,6 +53,19 @@ else:
         age_order = ['19세 이하', '20-29세', '30-39세', '40-49세', '50-59세', '60-64세', '65세 이상']
         
         st.header("1) 연령대별 사고율 비교")
+
+        # 그래프(왼쪽, 1.5)와 SQL(오른쪽, 1)을 위한 컬럼 분할
+        col_main, col_sql = st.columns([1.5, 1])
+        
+        with col_main:
+            fig1 = px.bar(df1, x='age_group', y='accident_rate', color='group', 
+                          color_discrete_map={'고령층(60세 이상)': 'crimson', '기타 연령': 'lightgray'})
+            st.plotly_chart(fig1, use_container_width=True)
+            
+        with col_sql:
+            st.markdown("**사용된 SQL 쿼리**")
+            st.code(query1, language='sql')
+
         query1 = """
         SELECT a.age_group, (CAST(a.accident_count AS FLOAT) / b.license_count) * 100 as accident_rate
         FROM 가해운전자 a
@@ -70,7 +83,14 @@ else:
         st.divider()
         st.subheader("🔍 SQL 및 인사이트")
         st.code(query1, language='sql')
-        st.write("- **인사이트**: 19세 이하 운전자의 사고율이 가장 높습니다. 정책 대상인 고령층(60세 이상)의 사고율 추세에 주목해야 합니다.")
+
+        # 그래프와 SQL 아래에 전체 인사이트 배치
+        st.markdown("**분석 인사이트**")
+        st.info("""
+        - **현황**: 19세 이하 운전자의 사고율이 가장 높게 나타났으며, 이는 운전 경험 부족 및 초보 운전자 비율이 높은 구조적 특성 때문으로 해석됩니다.
+        - **시사점**: 본 연구의 주요 타겟인 고령 운전자의 경우 60세 이후부터 사고율이 완만하게 상승하다 65세 이상에서 최고치를 기록합니다. 따라서 단순한 면허 반납 유도보다는 고령자의 인지 기능 저하를 보완할 수 있는 실질적인 이동권 보장 대책이 우선시되어야 합니다.
+        """)
+
 
         # 2) 고령 vs 비고령 상대 위험도 (65세 이상만 고령운전자)
         st.header("2) 고령 vs 비고령 상대 위험도")
