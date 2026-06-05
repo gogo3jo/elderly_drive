@@ -183,12 +183,6 @@ else:
             st.write("⚠️ **하위 반납율 지역 (Bottom 3)**")
             st.table(sorted_df[['region', 'return_rate']].tail(3).reset_index(drop=True).style.format({"return_rate": "{:.2f}%"}))
 
-        # 4. 정책 효과 시뮬레이션
-        st.subheader("💡 정책 효과 시뮬레이션")
-        st.write("서울시 사례(반납율 1%p↑ → 사고 200건↓)를 적용한 예상치입니다.")
-        target = st.slider("목표 반납율 추가 달성치(%p)", 0.0, 5.0, 1.0)
-        expected_reduction = target * 200
-        st.success(f"전국 반납율이 현재보다 {target}%p 높아지면, 연간 고령자 사고를 약 {expected_reduction:,.0f}건 예방할 수 있습니다.")
 
         st.subheader("🔍 SQL 및 인사이트")
         st.code(query3, language='sql')
@@ -196,6 +190,14 @@ else:
         - 지도 시각화 해석: 고령 인구 대비 면허 반납 성과가 높을 수록 색이 진할수록 면허반납 정책 참여도가 각 지역에서 높다는 의미이다. 면허반납율은 최대 1.4%로 부산이 가장 높고, 뒤이어 서울과 대구가 있다. 반대로 하위 반납율 지역은 광주, 세종, 전남으로 최저 0.72%이다. 지역별로 반납율 편차가 크므로 통계의 요인을 찾아야 할 필요성이 있다.
         - 서울연구원에 따르면, 운전면허 자진반납률이 1%p 증가할 경우 고령운전자 교통사고는 평균 0.02%p 감소하는 것으로 확인됐다. 이를 토대로 정책 효과를 시뮬레이션하면, 전국 면허 반납율이 현재보다 1.0%p 높아지면, 연간 고령자 사고를 약 200건 예방할 수 있다.
         """)
+
+
+        # 4. 정책 효과 시뮬레이션
+        st.subheader("💡 정책 효과 시뮬레이션")
+        st.write("서울시 사례(반납율 1%p↑ → 사고 200건↓)를 적용한 예상치입니다.")
+        target = st.slider("목표 반납율 추가 달성치(%p)", 0.0, 5.0, 1.0)
+        expected_reduction = target * 200
+        st.success(f"전국 반납율이 현재보다 {target}%p 높아지면, 연간 고령자 사고를 약 {expected_reduction:,.0f}건 예방할 수 있습니다.")
 
         # --- [섹션 4: 대중교통과 반납율 관계] ---
     elif menu == "대중교통과 반납율 관계":
