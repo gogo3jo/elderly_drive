@@ -64,17 +64,12 @@ else:
         
         df1['group'] = df1['age_group'].apply(lambda x: '고령층(60세 이상)' if x in ['60-64세', '65세 이상'] else '기타 연령')
         
-        # 그래프(왼쪽, 1.5)와 SQL(오른쪽, 1)을 위한 컬럼 분할
-        col_main, col_sql = st.columns([1.5, 1])
+        fig1 = px.bar(df1, x='age_group', y='accident_rate', color='group', 
+                      color_discrete_map={'고령층(60세 이상)': 'crimson', '기타 연령': 'lightgray'})
+        st.plotly_chart(fig1, use_container_width=True, key="age_accident_chart")
         
-        with col_main:
-            fig1 = px.bar(df1, x='age_group', y='accident_rate', color='group', 
-                          color_discrete_map={'고령층(60세 이상)': 'crimson', '기타 연령': 'lightgray'})
-            st.plotly_chart(fig1, use_container_width=True, key="age_accident_chart")
-            
-        with col_sql:
-            st.markdown("**사용된 SQL 쿼리**")
-            st.code(query1, language='sql')
+        st.markdown("**사용된 SQL 쿼리**")
+        st.code(query1, language='sql')
 
         # 그래프와 SQL 아래에 전체 인사이트 배치
         st.markdown("**분석 인사이트**")
