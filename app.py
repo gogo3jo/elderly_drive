@@ -44,14 +44,19 @@ else:
         # 1. DB에서 설문조사 데이터 불러오기
         # 주의: init_db.py에서 쓴 DB 파일명과 일치해야 합니다!
         st.markdown("### 📊 청년들이 바라보는 노인 안전사고의 중요도")
-        df_survey = run_query("SELECT * FROM 설문조사 ORDER BY 총점 DESC")
+        df_survey['color_group'] = df_survey['사고유형'].apply(
+            lambda x: '교통사고' if x == '교통사고' else '기타'
+        )
         
-        # 2. 시각화 (막대그래프)
-        fig_survey = px.bar(df_survey, x='사고유형', y='총점', 
-                            color='점수비중', color_continuous_scale='Viridis',
-                            title="안전사고 유형별 중요도 점수")
+        fig_survey = px.bar(
+            df_survey, x='사고유형', y='총점',
+            color='color_group',
+            color_discrete_map={'교통사고': 'crimson', '기타': 'lightgray'},
+            title="안전사고 유형별 중요도 점수"
+        )
+        fig_survey.update_layout(showlegend=False) # 범례 숨기기
         st.plotly_chart(fig_survey, use_container_width=True)
-        
+
         # 3. 데이터 해석 텍스트
         st.markdown("""
         노인이 겪을 수 있는 안전사고와 관련하여 우리사회가 시급히 대응해야 하는 사항 중 노인의 교통사고를 1순위 혹은 2순위로 선택한 청년들의 설문조사 응답을 참고하여 1순위(2점), 2순위(1점)를 부여한 가중치 분석 결과, 교통사고는 전체 응답 점수의 16.9%를 차지하여 세 번째로 높은 중요도를 보였다.
