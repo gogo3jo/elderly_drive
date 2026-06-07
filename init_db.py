@@ -2,7 +2,7 @@ import sqlite3
 
 def setup_database():
     # 데이터베이스 파일명 (app.py와 동일하게 맞춰주세요)
-    conn = sqlite3.connect('elderly_right.db')
+    conn = sqlite3.connect('drive.db')
     cursor = conn.cursor()
 
     # 테이블 생성
