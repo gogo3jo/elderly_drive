@@ -38,23 +38,26 @@ else:
     if menu == "문제 정의":
         st.title("👵 운전대를 놓은 노인은 어디로 갈 수 있을까?")
         st.subheader("언론과 대중은 고령 운전자 사고라는 결과만 보고 '운전하지 말라'고 한다.")
-        
-        st.divider()
 
-        # 1. DB에서 설문조사 데이터 불러오기
-        # 주의: init_db.py에서 쓴 DB 파일명과 일치해야 합니다!
-        st.markdown("### 📊 청년들이 바라보는 노인 안전사고의 중요도")
+        st.divider()
+        
+        # 1. DB에서 설문조사 데이터 불러오기 (데이터 정의가 가장 먼저!)
+        st.subheader("📊 청년들이 바라보는 노인 안전사고의 중요도")
+        df_survey = run_query("SELECT * FROM 설문조사 ORDER BY 총점 DESC")
+        
+        # 2. '교통사고'만 빨간색으로 표시하기 위한 그룹핑
         df_survey['color_group'] = df_survey['사고유형'].apply(
             lambda x: '교통사고' if x == '교통사고' else '기타'
         )
         
+        # 3. 시각화
         fig_survey = px.bar(
             df_survey, x='사고유형', y='총점',
             color='color_group',
             color_discrete_map={'교통사고': 'crimson', '기타': 'lightgray'},
             title="안전사고 유형별 중요도 점수"
         )
-        fig_survey.update_layout(showlegend=False) # 범례 숨기기
+        fig_survey.update_layout(showlegend=False)
         st.plotly_chart(fig_survey, use_container_width=True)
 
         # 3. 데이터 해석 텍스트
