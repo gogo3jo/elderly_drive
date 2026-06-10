@@ -11,7 +11,7 @@
 ### 3. 최종 제출 사항
 - GitHub 주소 https://github.com/gogo3jo/elderly_drive/blob/main/README.md
 - 분석 대시보드 https://elderlydrive.streamlit.app/
-- 프롬프트 공유링크https://aistudio.google.com/app/prompts/1P5Qt266Ps4_4aB7VwC5rDri3isu_aNsj
+- 프롬프트 공유https://aistudio.google.com/app/prompts/1P5Qt266Ps4_4aB7VwC5rDri3isu_aNsj
 
 ### 4. 분석 환경 및 데이터
 - **언어:** Python (Streamlit)
